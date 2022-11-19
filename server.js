@@ -73,10 +73,9 @@ app.post('/leaderboard', (req, res) => {
     } else {
       res.send(result.ops[0]);
     }
-});
+})});
 
 app.listen(process.env.PORT || 3000, () => {
-	   
     MongoClient.connect(CONNECTION_URL,  { useNewUrlParser: true }, (error, client) => {
         if(error) {
             throw error;
@@ -85,5 +84,4 @@ app.listen(process.env.PORT || 3000, () => {
         require('./app/routes')(app, database);
         console.log("Connected to `" + DATABASE_NAME + "`!");
     });
-
 });
