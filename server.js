@@ -1,6 +1,7 @@
 // create an express app
 const express = require("express");
 const app = express();
+const BodyParser = require("body-parser");
 
 const { MongoClient } = require("mongodb");
 
@@ -76,12 +77,11 @@ app.post('/leaderboard', (req, res) => {
 })});
 
 app.listen(process.env.PORT || 3000, () => {
-    MongoClient.connect(CONNECTION_URL,  { useNewUrlParser: true }, (error, client) => {
+    MongoClient.connect(uri,  { useNewUrlParser: true }, (error, client) => {
         if(error) {
             throw error;
         }
-        database = client.db(DATABASE_NAME);
-        require('./app/routes')(app, database);
-        console.log("Connected to `" + DATABASE_NAME + "`!");
+        database = client.db('leaderboard');
+        console.log("Connected to `" + "`!");
     });
 });
