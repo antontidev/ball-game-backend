@@ -9,42 +9,81 @@ const uri = process.env.MONGODB_URI || "mongodb-url";
 // use the express-static middleware
 app.use(express.static("public"));
 
-// define the first route
-app.get("/api/movie", async function (req, res) {
-  const client = new MongoClient(uri, { useUnifiedTopology: true });
-  
-  try {
-    await client.connect();
+app.use(BodyParser.json());
+app.use(BodyParser.urlencoded({ extended: true }));
 
-    const database = client.db('sample_mflix');
-    const collection = database.collection('movies');
+var database, collection;
 
-    // Query for a movie that has the title 'Back to the Future'
-    const query = { genres: "Comedy", poster: { $exists: true } };
-    const cursor = await collection.aggregate([
-      { $match: query },
-      { $sample: { size: 1 } },
-      { $project: 
-        {
-          title: 1,
-          fullplot: 1,
-          poster: 1
-        }
-      }
-    ]);
-
-    const movie = await cursor.next();
-
-    return res.json(movie);
-  } catch(err) {
-    console.log(err);
-  }
-  finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
+app.put('/leaderboard/:id', (req, res) => {
+  const id = req.params.id;
+  const details = { '_id': new ObjectID(id) };
+  const newscore = { name: req.body.name, score: req.body.score };
+  db.collection('scores').update(details, newscore, (err, result) => {
+    if (err) {
+        res.send({'error':'An error has occurred'});
+    } else {
+        res.send(newscore);
+    } 
+  });
 });
 
-// start the server listening for requests
-app.listen(process.env.PORT || 3000, 
-	() => console.log("Server is running..."));
+
+app.get('/leaderboard', (req, res) => {
+  db.collection('scores').find({}).toArray((err, result) => {
+    if (err) {
+      res.send({'error':'An error has occurred'});
+    } else {
+      res.send(result);
+    }
+  });
+});
+
+app.delete('/leaderboard/:id', (req, res) => {
+  const id = req.params.id;
+  const details = { '_id': new ObjectID(id) };
+  db.collection('scores').remove(details, (err, item) => {
+    if (err) {
+      res.send({'error':'An error has occurred'});
+    } else {
+      res.send('score ' + id + ' deleted!');
+    } 
+  });
+});
+
+
+app.get('/leaderboard/:id', (req, res) => {
+  const id = req.params.id;
+  const details = { '_id': new ObjectID(id) };
+  
+  db.collection('scores').findOne(details, (err, item) => {
+    if (err) {
+      res.send({'error':'An error has occurred'});
+    } else {
+      res.send(item);
+    }
+  });
+});
+
+
+app.post('/leaderboard', (req, res) => {
+  const score = { name: req.body.name, score: req.body.score };
+  db.collection('scores').insertOne(score, (err, result) => {
+    if (err) { 
+      res.send({ 'error': 'An error has occurred' }); 
+    } else {
+      res.send(result.ops[0]);
+    }
+});
+
+app.listen(process.env.PORT || 3000, () => {
+	   
+    MongoClient.connect(CONNECTION_URL,  { useNewUrlParser: true }, (error, client) => {
+        if(error) {
+            throw error;
+        }
+        database = client.db(DATABASE_NAME);
+        require('./app/routes')(app, database);
+        console.log("Connected to `" + DATABASE_NAME + "`!");
+    });
+
+});
