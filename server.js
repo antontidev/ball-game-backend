@@ -13,13 +13,13 @@ app.use(express.static("public"));
 app.use(BodyParser.json());
 app.use(BodyParser.urlencoded({ extended: true }));
 
-var database, collection;
+var database;
 
 app.put('/leaderboard/:id', (req, res) => {
   const id = req.params.id;
   const details = { '_id': new ObjectID(id) };
   const newscore = { name: req.body.name, score: req.body.score };
-  db.collection('scores').update(details, newscore, (err, result) => {
+  database.collection('scores').update(details, newscore, (err, result) => {
     if (err) {
         res.send({'error':'An error has occurred'});
     } else {
@@ -30,7 +30,7 @@ app.put('/leaderboard/:id', (req, res) => {
 
 
 app.get('/leaderboard', (req, res) => {
-  db.collection('scores').find({}).toArray((err, result) => {
+  database.collection('scores').find({}).toArray((err, result) => {
     if (err) {
       res.send({'error':'An error has occurred'});
     } else {
@@ -42,7 +42,7 @@ app.get('/leaderboard', (req, res) => {
 app.delete('/leaderboard/:id', (req, res) => {
   const id = req.params.id;
   const details = { '_id': new ObjectID(id) };
-  db.collection('scores').remove(details, (err, item) => {
+  database.collection('scores').remove(details, (err, item) => {
     if (err) {
       res.send({'error':'An error has occurred'});
     } else {
@@ -55,8 +55,7 @@ app.delete('/leaderboard/:id', (req, res) => {
 app.get('/leaderboard/:id', (req, res) => {
   const id = req.params.id;
   const details = { '_id': new ObjectID(id) };
-  
-  db.collection('scores').findOne(details, (err, item) => {
+  database.collection('scores').findOne(details, (err, item) => {
     if (err) {
       res.send({'error':'An error has occurred'});
     } else {
@@ -68,7 +67,7 @@ app.get('/leaderboard/:id', (req, res) => {
 
 app.post('/leaderboard', (req, res) => {
   const score = { name: req.body.name, score: req.body.score };
-  db.collection('scores').insertOne(score, (err, result) => {
+  database.collection('scores').insertOne(score, (err, result) => {
     if (err) { 
       res.send({ 'error': 'An error has occurred' }); 
     } else {
@@ -77,9 +76,11 @@ app.post('/leaderboard', (req, res) => {
 })});
 
 app.listen(process.env.PORT || 3000, () => {
+    console.log('start')
     MongoClient.connect(uri,  { useNewUrlParser: true }, (error, client) => {
         if(error) {
-            throw error;
+            console.log(error)
+            throw error;     
         }
         database = client.db('leaderboard');
         console.log("Connected to `" + "`!");
